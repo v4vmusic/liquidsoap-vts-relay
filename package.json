@@ -1,0 +1,18 @@
+{
+  "name": "liquidsoap-vts-relay",
+  "version": "0.0.1",
+  "description": "An icecast / liquidsoap stream monitor that relays vts information to a websocket. To be used in the <podcast:liveItem> tag of your podcast feed.",
+  "license": "MIT",
+  "author": "Kolomona Myer - AKA Sir Libre",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "socket.io": "^4.8.1",
+    "xml2js": "^0.6.2"
+  }
+}

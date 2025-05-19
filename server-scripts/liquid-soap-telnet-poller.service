@@ -1,0 +1,11 @@
+[Unit]
+Description=Liquidsoap Telnet Poller Service
+After=network.target
+
+[Service]
+User=hapa
+ExecStart=/bin/bash /home/hapa/scripts/icecastpoller.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
