@@ -3,10 +3,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const port = process.env.RELAY_PORT;
-console.log("Atempting to connect to: http://vts.lightningthrashes.com/:"+port);
+console.log("Atempting to connect to: http://vts.lightningthrashes.com:"+port);
 
 // const socket = io('http://localhost:'+port); // Replace with your Socket.IO server URL
-const socket = io('http://vts.lightningthrashes.com/:'+port); // Replace with your Socket.IO server URL
+const socket = io('http://vts.lightningthrashes.com:'+port); // Replace with your Socket.IO server URL
 
 socket.on('connect', () => {
     console.log('Connected to Socket.IO server');
