@@ -162,3 +162,11 @@ function normalizeDestinations(data) {
   
     return normalizedData;
   }
+
+  io.on('connection', (socket) => {
+    if (currentVTS){
+        console.log("Sending currentVTS to new client: ", currentVTS);
+        socket.emit('remoteValue', currentVTS);
+    }
+    
+  });
