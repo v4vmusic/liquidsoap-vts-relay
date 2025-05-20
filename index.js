@@ -5,7 +5,7 @@ import { Server } from "socket.io";
 import dotenv from 'dotenv';
 dotenv.config();
 
-const io = new Server(3033,{
+const io = new Server(process.env.RELAY_PORT,{
   cors: {
     origin: "*"
   }
