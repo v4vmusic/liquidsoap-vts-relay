@@ -1,12 +1,17 @@
 import Poller from './poller.js';
 import { getEpisodesFromPCIbyGuid } from './pci.js';
-    
+import { Server } from "socket.io";
 
 import dotenv from 'dotenv';
 dotenv.config();
 
+const io = new Server(3033,{
+  cors: {
+    origin: "*"
+  }
+});
+
 const ICECAST_STREAM_URL = process.env.ICECAST_STREAM_URL;
-const streamUrl = ICECAST_STREAM_URL.endsWith('/') ? ICECAST_STREAM_URL + 'status-json.xsl' : ICECAST_STREAM_URL + '/status-json.xsl';
 
 const pollerUrl = process.env.POLLER_URL;
 
@@ -18,36 +23,36 @@ let oldTitle = '';
 let currentVTS = {};
 let oldVTS = {};
 let streamItems = {};
-let currentTimeSplit = {};
 
-
+// TODO: Clean up redundant stuff and optimize
 
 const poller = new Poller(pollerUrl);
 
 poller.on('pollData', async pollData => {
     currentTitle = pollData.title;
+    console.log("Current title: ", currentTitle);
+    io.emit('metadata', pollData.elapsedTime + " " +currentTitle)
+
+    const metaGiuds = parseGuids(pollData.title);
 
     if (currentTitle !== oldTitle) {
         oldTitle = currentTitle;
-        // The title has changed
+        // The title has changed a new stream is being played
         console.log("New title: ", currentTitle);
-        console.log("streamGuids: ", parseGuids(pollData.title));
-        streamItems = await getEpisodesFromPCIbyGuid(parseGuids(pollData.title).feedGuid);
+        streamItems = await getEpisodesFromPCIbyGuid(metaGiuds.feedGuid);
+        
     }
-    // console.log("pollData: ", pollData);
-    currentVTS = getCurrentTimeSplit(pollData.elapsedTime, parseGuids(pollData.title).itemGuid, streamItems);
-    if (currentVTS !== oldVTS) {
-        oldVTS = currentVTS;
+    currentVTS = await getCurrentTimeSplit(pollData.elapsedTime, metaGiuds.itemGuid, streamItems);
+    
+
+    if (currentVTS?.itemGuid !== oldVTS?.itemGuid) {
         // The VTS has changed
+        oldVTS = currentVTS;
+        // TODO: Normalize splits and inject streamFeed splits percentage
+        io.emit('remoteValue', currentVTS) //send to all connected clients
         console.log("New VTS: ", currentVTS);
         
     }
-    if (currentVTS) {
-        // The host is talking, default to 
-    }
-    
-    console.log("currentTimeSplit: ", JSON.stringify(currentVTS));
-
 
 });
 
@@ -66,32 +71,93 @@ function parseGuids(inString) {
     };
 }
 
-function getCurrentTimeSplit(elapsedTime, guid, streamItems) {
-    // guid is the item (episode) guid for the stream
-
-    const item = streamItems.items.find(item => item.guid === guid); 
-    // item is the current episode being played in the stream
-
-    // console.log("streamItems.items: ", JSON.stringify(streamItems.items)); // Too long to debug
-    // console.log("item: ", JSON.stringify(item));
-    // console.log("Item: ", item);
-    
-
+async function getCurrentTimeSplit(elapsedTime, guid, streamItems) {
+    let remoteValue = {};
     // Find the currently playing song (timeSplit) in the stream
+    const item = streamItems.items.find(item => item.guid === guid); 
+
     if (!item) {
-        throw new Error(`Item with guid ${guid} not found`);
+        throw new Error(`Stream item with guid ${guid} not found`);
     }
+
     const timeSplits = item.timesplits.sort((a, b) => a.startTime - b.startTime);
+  
     const currentTimeSplit = timeSplits.find(timeSplit =>
         elapsedTime >= timeSplit.startTime && elapsedTime < timeSplit.startTime + timeSplit.duration
     ) || null;
-    // console.log("TimeSplits: ", timeSplits);
-    
 
-    return currentTimeSplit;
+    currentVTS = currentTimeSplit;
+    // console.log("streamItems: ", streamItems);
+    if (currentTimeSplit === null) {
+        // No current time split found
+        // set the vts to the main feed.
+        console.log("No current time split found, building one from stream feed");
+        // TODO: I don't like this redundant code
+        
+        
+        remoteValue = {
+            "image": streamItems.image ?? "",
+            "title": streamItems.title ?? "Unknown Title",
+            "line": [streamItems.title ?? "", streamItems.author ?? ""],
+            "description": (streamItems.description ?? "").substring(0, 100),
+            "value": streamItems.value ?? {},
+            "type": streamItems.value?.model?.type ??  "",
+            "link": streamItems.link ?? "",
+            "chaptersUrl": streamItems.chaptersUrl,
+            "enclosureUrl": streamItems.enclosureUrl ?? "",
+            "feedGuid": streamItems.feedGuid ?? "",
+            "feedUrl": streamItems.rssUrl ?? "",
+            "medium":  streamItems.medium ?? "",
+            "itemGuid": streamItems.guid ?? "",
+            "duration": streamItems.duration ?? 33,
+            "startTime": 0
+        }
+
+        return remoteValue;
+    }
+    
+        const currentVtsFeed = await getEpisodesFromPCIbyGuid(currentTimeSplit.feedGuid);
+        const currentVtsItem = currentVtsFeed.items.find(item => item.guid === currentTimeSplit.itemGuid);
+        
+        // Line 1 is the album, line 2 is the artist
+        remoteValue = {
+            "image": currentVtsFeed.image ?? "",
+            "title": currentVtsItem.title ?? "Unknown Title",
+            "line": [currentVtsItem.title ?? "", currentVtsFeed.author ?? ""],
+            "description": (currentVtsItem.description ?? "").substring(0, 100),
+            "value": currentVtsItem.value ?? currentVtsFeed.value ?? {},
+            "type": currentVtsItem.value?.model?.type ?? currentVtsFeed.value?.model?.type ?? "",
+            "link": currentVtsFeed.link ?? "",
+            "chaptersUrl": currentVtsItem.chaptersUrl,
+            "enclosureUrl": currentVtsItem.enclosureUrl ?? "",
+            "feedGuid": currentVtsItem.podcastGuid ?? "",
+            "feedUrl": currentVtsItem.feedUrl ?? "",
+            "medium":  currentVtsFeed.medium ?? "",
+            "itemGuid": currentVtsItem.guid ?? "",
+            "duration": currentVtsItem.duration ?? 33,
+            "startTime": 0
+        }
+    return remoteValue;
 }
 
-
-
-
-
+function normalizeDestinations(data) {
+    console.log(clone(data));
+    const nonFeeItems = data.filter((item) => !item.fee);
+    const feeItems = data.filter((item) => item.fee);
+  
+    // Calculate total split of non-fee items
+    const totalSplit = nonFeeItems.reduce(
+      (acc, item) => acc + Number(item.split),
+      0
+    );
+  
+    // Normalize splits to percentages of the total
+    nonFeeItems.forEach(
+      (item) => (item.split = (Number(item.split) / totalSplit) * 100)
+    );
+  
+    // Merge fee and non-fee items
+    const normalizedData = nonFeeItems.concat(feeItems);
+  
+    return normalizedData;
+  }

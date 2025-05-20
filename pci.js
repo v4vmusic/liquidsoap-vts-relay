@@ -89,6 +89,7 @@ export async function getEpisodesFromPCIbyGuid(feedGuid) {
     data.description = feedData.feed.description;
     data.rssUrl = feedData.feed.originalUrl;
     data.value = feedData.feed.value;
+    data.medium = feedData.feed.medium;
     
     // console.log("feedData!!!!!!!!!!!!! \n", feedData);
     

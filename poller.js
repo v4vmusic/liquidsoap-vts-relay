@@ -17,10 +17,6 @@ export default class Poller extends EventEmitter {
       
       poll() {
         const sequenceNumber = this.sequenceNumber++;
-        // console.log("getting response sequence number", sequenceNumber);
-        // console.log("Interval: ", this.interval, this.interval.toString());
-        
-        
         axios.get(this.url)
           .then((response) => this.handleResponse(response, sequenceNumber))
           .catch((error) => console.error(error));
@@ -37,8 +33,7 @@ export default class Poller extends EventEmitter {
 
             const data = response.data;
             const startTime = new Date(data.startTime);
-            console.log("Start time: ",data.startTime, startTime);
-            
+            // console.log("Start time: ",data.startTime, startTime);
             const title = data.title;
             const currentTime = new Date();
             const elapsedTime = Math.floor((currentTime - startTime) / 1000);
