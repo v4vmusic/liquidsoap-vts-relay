@@ -13,6 +13,10 @@ socket.on('connect', () => {
 });
 
 socket.on('remoteValue', (data) => {
+    if (data) {
+        console.log("No data in remoteValue: There may be a problem with the stream's RSS feed");
+        return;   
+    }
     // console.log('Received remoteValue:', JSON.stringify(data, null, 2));
     console.log(data.line[0], data.line[1]);
     

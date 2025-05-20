@@ -1,3 +1,4 @@
+$PATH_TO_WEB_SERVER_DIRECTORY
 while true
 do
   json=$(echo "Sir_Libres_Liberty_Stream.metadata" | 
@@ -10,6 +11,6 @@ do
   sed 's/^/{/g; s/$/}/g')
   json=$(echo "$json" | sed 's/"on_air":"/"startTime":"/g')
   echo "$json"
-  echo "$json" > /home/hapa/public_html/lit.lightningthrashes.com/public/current-episode.json
+  echo "$json" > $PATH_TO_WEB_SERVER_DIRECTORY/current-episode.json
   sleep 1
 done

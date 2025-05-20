@@ -62,7 +62,7 @@ export async function getFeedFromPCIbyGuid(guid, caller) {
 // Also returns feed data (because the Author is not included in the episode data)
 //https://api.podcastindex.org/api/1.0/episodes/bypodcastguid?guid=d5e73072-64a2-56a3-9dcd-4a00bfe561d5&pretty&max=1000
 export async function getEpisodesFromPCIbyGuid(feedGuid) {
-  // console.log('getEpisodesFromPCIbyGuid line 65 pci.js (call to the index):', feedGuid);
+  console.log('getEpisodesFromPCIbyGuid line 65 pci.js (call to the index):', feedGuid);
 
   try {
     if (!PCI_KEY || !PCI_SECRET) {

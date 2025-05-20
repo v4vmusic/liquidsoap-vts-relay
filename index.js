@@ -119,7 +119,11 @@ async function getCurrentTimeSplit(elapsedTime, guid, streamItems) {
     
         const currentVtsFeed = await getEpisodesFromPCIbyGuid(currentTimeSplit.feedGuid);
         const currentVtsItem = currentVtsFeed.items.find(item => item.guid === currentTimeSplit.itemGuid);
-        
+        if (!currentVtsItem) {
+            console.log(`Stream item with guid ${currentTimeSplit.itemGuid} not found`);
+            return
+            
+        }
         // Line 1 is the album, line 2 is the artist
         remoteValue = {
             "image": currentVtsFeed.image ?? "",

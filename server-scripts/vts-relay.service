@@ -1,0 +1,12 @@
+[Unit]
+Description=Live Stream Value Time Split Relay Service
+After=network.target
+
+[Service]
+User=YOURUSERNAME
+WorkingDirectory=/PATH/TO/REPO/liquidsoap-vts-relay
+ExecStart=/PATH/TO/NODE/RUNTIME/node /PATH/TO/REPO/liquidsoap-vts-relay/index.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
