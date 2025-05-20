@@ -5,13 +5,12 @@ import { Server } from "socket.io";
 import dotenv from 'dotenv';
 dotenv.config();
 
-const io = new Server({
-  cors: {
-    origin: (origin, callback) => {
-      callback(null, true);
-    }
-  }
-});
+const io = new Server(process.env.RELAY_PORT, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  });
 
 const ICECAST_STREAM_URL = process.env.ICECAST_STREAM_URL;
 
