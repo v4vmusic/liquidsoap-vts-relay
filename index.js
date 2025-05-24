@@ -7,8 +7,9 @@ dotenv.config();
 
 const io = new Server(process.env.RELAY_PORT, {
     cors: {
-      origin: ["*"],
-      methods: ["GET", "POST"],
+      origin: "*",
+      methods: ["GET", "POST", "OPTIONS"],
+      allowedHeaders: ["DNT", "X-CustomHeader", "Keep-Alive", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type"],
     },
   });
 
