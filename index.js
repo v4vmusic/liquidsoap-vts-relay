@@ -7,7 +7,7 @@ dotenv.config();
 
 const io = new Server(process.env.RELAY_PORT, {
     cors: {
-      origin: "*",
+      origin: ["*"],
       methods: ["GET", "POST"],
     },
   });
@@ -124,7 +124,7 @@ async function getCurrentTimeSplit(elapsedTime, guid, streamItems) {
             return
             
         }
-        // Line 1 is the album, line 2 is the artist
+        // Line[0] is the album, line[1] is the artist
         remoteValue = {
             "image": currentVtsFeed.image ?? "",
             "title": currentVtsItem.title ?? "Unknown Title",

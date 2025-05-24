@@ -3,17 +3,27 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const port = process.env.RELAY_PORT;
-console.log("Atempting to connect to: http://vts.lightningthrashes.com:"+port);
-
+console.log("Atempting to connect to: https://vts.lightningthrashes.com");
 // const socket = io('http://localhost:'+port); // Replace with your Socket.IO server URL
-const socket = io('http://vts.lightningthrashes.com:'+port); // Replace with your Socket.IO server URL
+
+const socket = io('https://vts.lightningthrashes.com', {
+    debug: true
+  });
 
 socket.on('connect', () => {
     console.log('Connected to Socket.IO server');
 });
 
+socket.on('error', (error) => {
+    console.error('Socket.IO error:', error);
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Socket.IO connect error:', error);
+  });
+
 socket.on('remoteValue', (data) => {
-    if (data) {
+    if (!data) {
         console.log("No data in remoteValue: There may be a problem with the stream's RSS feed");
         return;   
     }
