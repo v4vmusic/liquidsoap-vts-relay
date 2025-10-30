@@ -41,9 +41,24 @@ poller.on('pollData', async pollData => {
         oldTitle = currentTitle;
         // The title has changed a new stream is being played
         console.log("New title: ", currentTitle);
-        streamItems = await getEpisodesFromPCIbyGuid(metaGiuds.feedGuid);
+        try {
+            streamItems = await getEpisodesFromPCIbyGuid(metaGiuds.feedGuid);
+            if (!streamItems) {
+                console.error("Failed to get stream items from PCI");
+                return;
+            }
+        } catch (error) {
+            console.error("Error getting episodes from PCI:", error.message);
+            return;
+        }
         
     }
+    
+    if (!streamItems || !streamItems.items) {
+        console.error("No valid stream items available, skipping VTS processing");
+        return;
+    }
+    
     currentVTS = await getCurrentTimeSplit(pollData.elapsedTime, metaGiuds.itemGuid, streamItems);
     
 
@@ -76,6 +91,12 @@ function parseGuids(inString) {
 async function getCurrentTimeSplit(elapsedTime, guid, streamItems) {
     let remoteValue = {};
     // Find the currently playing song (timeSplit) in the stream
+    
+    if (!streamItems || !streamItems.items) {
+        console.error("Invalid streamItems structure:", streamItems);
+        return null;
+    }
+    
     const item = streamItems.items.find(item => item.guid === guid); 
 
     if (!item) {

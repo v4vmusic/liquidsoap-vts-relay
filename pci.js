@@ -43,8 +43,25 @@ export async function getFeedFromPCIbyGuid(guid, caller) {
 
     const url = `${PCI_BASEURL}podcasts/byguid?guid=${guid}`;
     // console.log('url:', url);
-    const response = await fetch(url, { headers });
-    const data = await response.json();
+    const response = await fetch(url, { 
+      headers: {
+        ...headers,
+        'User-Agent': USER_AGENT
+      } 
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', responseText.substring(0, 100));
+      throw new Error(`Invalid JSON response: ${parseError.message}`);
+    }
     // console.log('data:', data);
 
     // const episodes = data.items;
@@ -72,12 +89,28 @@ export async function getEpisodesFromPCIbyGuid(feedGuid) {
     const url = `${PCI_BASEURL}episodes/bypodcastguid?guid=${feedGuid}&max=1000`;
     // console.log('url:', url);
     
-    const response = await fetch(url, { headers });
-    const data = await response.json();
+    const response = await fetch(url, { 
+      headers: {
+        ...headers,
+        'User-Agent': USER_AGENT
+      } 
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', responseText.substring(0, 100));
+      throw new Error(`Invalid JSON response: ${parseError.message}`);
+    }
     const feedData = await getFeedFromPCIbyGuid(feedGuid, "pci.js getEpisodesFromPCIbyGuid");
-    if (feedData.description == 'No feeds match this guid.') {
-      // console.log(feedData.description, feedGuid);
-      // TODO: Handle Error better
+    if (!feedData || !feedData.feed || feedData.description == 'No feeds match this guid.') {
+      console.log('No feed found for GUID:', feedGuid);
       return null;
     }
       
@@ -97,6 +130,7 @@ export async function getEpisodesFromPCIbyGuid(feedGuid) {
     return data;
   } catch (error) {
     console.error('getEpisodeFromPCIbyGuids error:', error.message);
+    return null;
   }
 }
 
